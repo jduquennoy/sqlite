@@ -54,7 +54,7 @@ public struct SQLiteDataDecoder {
             switch data {
             case .blob(let data): json = data
             case .text(let string): json = Data(string.utf8)
-            default: throw SQLiteError(problem: .error, reason: "Could not decode json.", source: .capture())
+            default: throw SQLiteError(type: .invalidData, reason: "Could not decode json.", source: .capture())
             }
             let unwrapper = try JSONDecoder().decode(DecoderUnwrapper.self, from: json)
             return unwrapper.decoder

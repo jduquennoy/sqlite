@@ -115,7 +115,7 @@ internal struct SQLiteStatement {
             return .float(double)
         case .text:
             guard let val = sqlite3_column_text(c, offset) else {
-                throw SQLiteError(problem: .error, reason: "Unexpected nil column text.", source: .capture())
+                throw SQLiteError(type: .invalidData, reason: "Unexpected nil column text.", source: .capture())
             }
             let string = String(cString: val)
             return .text(string)
@@ -139,13 +139,13 @@ internal struct SQLiteStatement {
         case SQLITE_TEXT: return .text
         case SQLITE_BLOB: return .blob
         case SQLITE_NULL: return .null
-        default: throw SQLiteError(problem: .error, reason: "Unexpected column type.", source: .capture())
+        default: throw SQLiteError(type: .invalidData, reason: "Unexpected column type for at index \(offset).", source: .capture())
         }
     }
     
     private func column(at offset: Int32) throws -> SQLiteColumn {
         guard let nameRaw = sqlite3_column_name(c, offset) else {
-            throw SQLiteError(problem: .error, reason: "Unexpected nil column name", source: .capture())
+            throw SQLiteError(type: .unknownEntity, reason: "Unexpected nil column name for index \(offset)", source: .capture())
         }
         let table: String?
         if let tableNameRaw = sqlite3_column_table_name(c, offset) {

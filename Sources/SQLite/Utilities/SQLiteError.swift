@@ -6,22 +6,24 @@ import SQLite3
 import Debugging
 
 /// Errors that can be thrown while using SQLite
-public struct SQLiteError: Debuggable {
-    let problem: Problem
+public struct SQLiteError: SQLError {
+    public let type: SQLErrorType
+    public let statusCode: Int32?
     public let reason: String
     public var sourceLocation: SourceLocation?
     public var stackTrace: [String]
     public var identifier: String {
-        return problem.rawValue
+        var identifier = type.description
+        if let statusCode = self.statusCode {
+            identifier += " (status code: \(statusCode))"
+        }
+        return identifier
     }
 
     /// Create an error from a manual problem and reason.
-    init(
-        problem: Problem,
-        reason: String,
-        source: SourceLocation
-    ) {
-        self.problem = problem
+    init(type: SQLErrorType, reason: String, source: SourceLocation) {
+        self.statusCode = nil
+        self.type = type
         self.reason = reason
         self.sourceLocation = source
         self.stackTrace = SQLiteError.makeStackTrace()
@@ -33,7 +35,8 @@ public struct SQLiteError: Debuggable {
         connection: SQLiteConnection,
         source: SourceLocation
     ) {
-        self.problem = Problem(statusCode: statusCode)
+        self.statusCode = statusCode
+        self.type = SQLErrorType(statusCode: statusCode)
         self.reason = connection.errorMessage ?? "Unknown"
         self.sourceLocation = source
         self.stackTrace = SQLiteError.makeStackTrace()
@@ -41,47 +44,11 @@ public struct SQLiteError: Debuggable {
 }
 
 /// Problem kinds.
-internal enum Problem: String {
-    case error
-    case intern
-    case permission
-    case abort
-    case busy
-    case locked
-    case noMemory
-    case readOnly
-    case interrupt
-    case ioError
-    case corrupt
-    case notFound
-    case full
-    case cantOpen
-    case proto
-    case empty
-    case schema
-    case tooBig
-    case constraint
-    case mismatch
-    case misuse
-    case noLFS
-    case auth
-    case format
-    case range
-    case notADatabase
-    case notice
-    case warning
-    case row
-    case done
-    case connection
-    case close
-    case prepare
-    case bind
-    case execute
-
+internal extension SQLErrorType {
     init(statusCode: Int32) {
         switch statusCode {
         case SQLITE_ERROR:
-            self = .error
+            self = .unknown
         case SQLITE_INTERNAL:
             self = .intern
         case SQLITE_PERM:
@@ -93,55 +60,47 @@ internal enum Problem: String {
         case SQLITE_LOCKED:
             self = .locked
         case SQLITE_NOMEM:
-            self = .noMemory
+            self = .memory
         case SQLITE_READONLY:
             self = .readOnly
         case SQLITE_INTERRUPT:
-            self = .interrupt
+            self = .abort
         case SQLITE_IOERR:
             self = .ioError
         case SQLITE_CORRUPT:
-            self = .corrupt
+            self = .invalidDatabase
         case SQLITE_NOTFOUND:
-            self = .notFound
+            self = .ioError
         case SQLITE_FULL:
-            self = .full
+            self = .ioError
         case SQLITE_CANTOPEN:
-            self = .cantOpen
+            self = .ioError
         case SQLITE_PROTOCOL:
-            self = .proto
+            self = .unknown
         case SQLITE_EMPTY:
-            self = .empty
+            self = .unknown // not used according to the doc
         case SQLITE_SCHEMA:
-            self = .schema
+            self = .unknown
         case SQLITE_TOOBIG:
-            self = .tooBig
+            self = .invalidData
         case SQLITE_CONSTRAINT:
-            self = .constraint
+          self = .constraint
         case SQLITE_MISMATCH:
-            self = .mismatch
+            self = .invalidData
         case SQLITE_MISUSE:
-            self = .misuse
+            self = .invalidRequest
         case SQLITE_NOLFS:
-            self = .noLFS
+            self = .ioError
         case SQLITE_AUTH:
-            self = .auth
+            self = .permission
         case SQLITE_FORMAT:
-            self = .format
+            self = .unknown // not used according to the doc
         case SQLITE_RANGE:
-            self = .range
+          self = .unknownEntity
         case SQLITE_NOTADB:
-            self = .notADatabase
-        case SQLITE_NOTICE:
-            self = .notice
-        case SQLITE_WARNING:
-            self = .warning
-        case SQLITE_ROW:
-            self = .row
-        case SQLITE_DONE:
-            self = .done
+            self = .invalidDatabase
         default:
-            self = .error
+            self = .unknown
         }
     }
 }

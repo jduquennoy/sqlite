@@ -38,8 +38,9 @@ public final class SQLiteDatabase: Database, LogSupporting {
         // make connection
         let options = SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX
         var handle: OpaquePointer?
-        guard sqlite3_open_v2(self.storage.path, &handle, options, nil) == SQLITE_OK, let c = handle else {
-            throw SQLiteError(problem: .error, reason: "Could not open database.", source: .capture())
+        let openResultCode = sqlite3_open_v2(self.storage.path, &handle, options, nil)
+        guard openResultCode == SQLITE_OK, let c = handle else {
+          throw SQLiteError(type: SQLErrorType(statusCode: openResultCode), reason: "Could not open database.", source: .capture())
         }
         self.handle = c
     }

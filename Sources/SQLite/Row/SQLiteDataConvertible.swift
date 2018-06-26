@@ -20,7 +20,7 @@ extension Data: SQLiteDataConvertible {
     public static func convertFromSQLiteData(_ data: SQLiteData) throws -> Data {
         switch data {
         case .blob(let data): return data
-        default: throw SQLiteError(problem: .warning, reason: "Could not convert to Data: \(data)", source: .capture())
+        default: throw SQLiteError(type: .invalidData, reason: "Could not convert to Data: \(data)", source: .capture())
         }
     }
     
@@ -36,18 +36,18 @@ extension UUID: SQLiteDataConvertible {
         switch data {
         case .text(let string):
             guard let uuid = UUID(uuidString: string) else {
-                throw SQLiteError(problem: .warning, reason: "Could not convert string to UUID: \(string)", source: .capture())
+                throw SQLiteError(type: .invalidData, reason: "Could not convert string to UUID: \(string)", source: .capture())
             }
             return uuid
         case .blob(let data):
             guard data.count == 16 else {
-                 throw SQLiteError(problem: .warning, reason: "Could not convert to UUID: \(data)", source: .capture())
+                 throw SQLiteError(type: .invalidData, reason: "Could not convert to UUID: \(data)", source: .capture())
             }
             return UUID(uuid: (
                 data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7],
                 data[8], data[9], data[10], data[11], data[12], data[13], data[14], data[15]
             ))
-        default: throw SQLiteError(problem: .warning, reason: "Could not convert to UUID: \(data)", source: .capture())
+        default: throw SQLiteError(type: .invalidData, reason: "Could not convert to UUID: \(data)", source: .capture())
         }
     }
     
@@ -65,7 +65,7 @@ extension Date: SQLiteDataConvertible {
     public static func convertFromSQLiteData(_ data: SQLiteData) throws -> Date {
         switch data {
         case .float(let double): return Date(timeIntervalSince1970: double)
-        default: throw SQLiteError(problem: .warning, reason: "Could not convert to Date: \(data)", source: .capture())
+        default: throw SQLiteError(type: .invalidData, reason: "Could not convert to Date: \(data)", source: .capture())
         }
     }
     
@@ -80,7 +80,7 @@ extension String: SQLiteDataConvertible {
     public static func convertFromSQLiteData(_ data: SQLiteData) throws -> String {
         switch data {
         case .text(let string): return string
-        default: throw SQLiteError(problem: .warning, reason: "Could not convert to String: \(data)", source: .capture())
+        default: throw SQLiteError(type: .invalidData, reason: "Could not convert to String: \(data)", source: .capture())
         }
     }
     
@@ -96,10 +96,10 @@ extension URL: SQLiteDataConvertible {
         switch data {
         case .text(let string):
             guard let url = URL(string: string) else {
-                throw SQLiteError(problem: .warning, reason: "Could not convert to URL: \(data)", source: .capture())
+                throw SQLiteError(type: .invalidData, reason: "Could not convert to URL: \(data)", source: .capture())
             }
             return url
-        default: throw SQLiteError(problem: .warning, reason: "Could not convert to URL: \(data)", source: .capture())
+        default: throw SQLiteError(type: .invalidData, reason: "Could not convert to URL: \(data)", source: .capture())
         }
     }
     
@@ -116,13 +116,13 @@ extension FixedWidthInteger {
         switch data {
         case .integer(let int):
             guard int <= Self.max else {
-                throw SQLiteError(problem: .warning, reason: "Int too large for \(Self.self): \(int)", source: .capture())
+                throw SQLiteError(type: .invalidData, reason: "Int too large for \(Self.self): \(int)", source: .capture())
             }
             guard int >= Self.min else {
-                throw SQLiteError(problem: .warning, reason: "Int too small for \(Self.self): \(int)", source: .capture())
+                throw SQLiteError(type: .invalidData, reason: "Int too small for \(Self.self): \(int)", source: .capture())
             }
             return numericCast(int)
-        default: throw SQLiteError(problem: .warning, reason: "Could not convert to \(Self.self): \(data)", source: .capture())
+        default: throw SQLiteError(type: .invalidData, reason: "Could not convert to \(Self.self): \(data)", source: .capture())
         }
     }
     
@@ -149,7 +149,7 @@ extension BinaryFloatingPoint {
         switch data {
         case .integer(let int): return .init(int)
         case .float(let double): return .init(double)
-        default: throw SQLiteError(problem: .warning, reason: "Could not convert to String: \(data)", source: .capture())
+        default: throw SQLiteError(type: .invalidData, reason: "Could not convert to String: \(data)", source: .capture())
         }
     }
     
@@ -158,7 +158,7 @@ extension BinaryFloatingPoint {
         switch self {
         case let double as Double: return .float(double)
         case let float as Float: return .float(.init(float))
-        default: throw SQLiteError(problem: .warning, reason: "Could not convert to SQLiteData: \(Self.self)", source: .capture())
+        default: throw SQLiteError(type: .invalidData, reason: "Could not convert to SQLiteData: \(Self.self)", source: .capture())
         }
         
     }
@@ -174,7 +174,7 @@ extension Bool: SQLiteDataConvertible {
         case .integer(let intValue):
             let boolValue = intValue == 0 ? false : true
             return boolValue
-        default: throw SQLiteError(problem: .warning, reason: "Could not convert to Bool: \(data)", source: .capture())
+        default: throw SQLiteError(type: .invalidData, reason: "Could not convert to Bool: \(data)", source: .capture())
         }
     }
     
